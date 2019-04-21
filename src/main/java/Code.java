@@ -19,10 +19,19 @@ public class Code {
 		Scanner scan = new Scanner(System.in);
 		System.out.print("Inserire il link del sito cineblog: ");
 		String url = scan.next();
+		int length = url.length();
+		
+		//Nel caso in cui l'url termini con un carattere '/' questi viene rimosso
+		if(url.charAt(length-1) == '/') {	                
+			url = url.substring(0, length-1);
+		}
+		
+		System.out.println(url);
 		System.out.print("Quante pagine vuoi controllare? (-1 per arrivare fino all'ultima disponibile): ");
 		howManyPages = scan.nextInt();
 		WebDriver driver = new FirefoxDriver();
 		driver.get(url);			//LINK: https://cb01.pink
+		
 	
 	do {
 		double topLeft = 0;
@@ -52,26 +61,31 @@ public class Code {
 			//Il totale del punteggio è dato dalla somma di questi tre elementi:
 			double totalRate = topLeft + centerLeft + bottomLeft;			
 			
-			
-				//Se il film supera le 4,5 stelle stampa il nome
+				//Se il film supera le 4,5 stelle stampa il nome, voto, pagina e link
 			if(totalRate >= 4.5) {	
-				System.out.println(fiveStarElement.get(i).findElement(By.tagName("a")).getText() + "\tVoto: " + totalRate + " su 5" + " Pagina " + currentPage);
+				String filmName =	fiveStarElement.get(i).findElement(By.tagName("a")).getText();
+				String filmLink = fiveStarElement.get(i).findElement(By.tagName("a")).getAttribute("href");
+				System.out.println(filmName + "\tVoto: " + totalRate + " su 5" + "\tPagina " + currentPage + " URL: " + filmLink);
+				
+				
+				
+				
+				
 			}
 			
 			topLeft = centerLeft = bottomLeft = 0; //reset
 			i++;
 				
-			}//la farfalla è bianca
+			}
 			
 			currentPage ++;
 			//Clicca sulla pagina successiva
 			String nextPage = String.format("//a[@href='%s/page/%s/']",url, currentPage);
-			driver.findElement(By.xpath(nextPage)).click(); // clicking on the next button
+			driver.findElement(By.xpath(nextPage)).click(); 
 			
 			//Aspetta che l'url sia caricato
 			WebDriverWait wait = new WebDriverWait(driver, 20); 
 			wait.until(ExpectedConditions.urlToBe(url + "/page/" + currentPage +"/"));
-			
 			
 	}while(currentPage < howManyPages);	
 		
