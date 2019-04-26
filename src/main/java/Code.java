@@ -13,7 +13,8 @@ public class Code {
 	public static void main(String[] args) {
 		int howManyPages = 0;	//Number of pages to check
 		int currentPage = 1;
-		
+		boolean startUrl = true;
+		int startPage = 0;		//Number of starting page (if the user insert a url with a number of page)
 		System.setProperty(GeckoDriverService.GECKO_DRIVER_EXE_PROPERTY,"C:\\Users\\amman\\Documents\\Missingtech\\PluginDriverConfig\\geckodriver\\geckodriver.exe" );
 		
 		Scanner scan = new Scanner(System.in);
@@ -25,13 +26,37 @@ public class Code {
 		if(url.charAt(length-1) == '/') {	                
 			url = url.substring(0, length-1);
 		}
+		if(url.contains("page"))		{
+			startUrl = false;
+			length = url.length();
+			
+			if(url.charAt(length-2) == '/') {	
+				char prova = url.charAt(length-1);
+				startPage = Character.getNumericValue(prova);
+				url = url.substring(0, length-2);
+			}else {
+				String prova = url.substring(length - 2, length);
+				startPage = Integer.parseInt(prova);
+				url = url.substring(0, length-3);
+			}
+			//System.out.println("L'url contiene una pagina di inizio: " + startPage);
+		}else {
+			startUrl = true;
+		}
 		
-		System.out.println(url);
+		
 		System.out.print("Quante pagine vuoi controllare? (-1 per arrivare fino all'ultima disponibile): ");
 		howManyPages = scan.nextInt();
 		WebDriver driver = new FirefoxDriver();
-		driver.get(url);			//LINK: https://cb01.pink
 		
+		if(startUrl== true) {
+			System.out.println(url);
+		driver.get(url);			//LINK: https://cb01.date
+		}else{
+			String completeUrl = url + "/" + startPage;
+			System.out.println(completeUrl);
+			driver.get(completeUrl);
+		}
 	
 	do {
 		double topLeft = 0;
@@ -65,12 +90,11 @@ public class Code {
 			if(totalRate >= 4.5) {	
 				String filmName =	fiveStarElement.get(i).findElement(By.tagName("a")).getText();
 				String filmLink = fiveStarElement.get(i).findElement(By.tagName("a")).getAttribute("href");
-				System.out.println(filmName + "\tVoto: " + totalRate + " su 5" + "\tPagina " + currentPage + " URL: " + filmLink);
-				
-				
-				
-				
-				
+				if (startUrl == true) {
+					System.out.println(filmName + "\tVoto: " + totalRate + " su 5" + "\tPagina " + currentPage + " URL: " + filmLink);
+				}else {
+					System.out.println(filmName + "\tVoto: " + totalRate + " su 5" + "\tPagina " + startPage + " URL: " + filmLink);
+				}
 			}
 			
 			topLeft = centerLeft = bottomLeft = 0; //reset
@@ -80,15 +104,29 @@ public class Code {
 			
 			currentPage ++;
 			//Clicca sulla pagina successiva
-			String nextPage = String.format("//a[@href='%s/page/%s/']",url, currentPage);
-			driver.findElement(By.xpath(nextPage)).click(); 
+			if (startUrl == true) {
+				String nextPage = String.format("//a[@href='%s/page/%s/']",url, currentPage);
+				//System.out.println("Controllerò url: " + nextPage);
+				driver.findElement(By.xpath(nextPage)).click(); 
+				
+				//Aspetta che l'url sia caricato  (POSSIBILE PROBLEMA
+				WebDriverWait wait = new WebDriverWait(driver, 20); 
+				wait.until(ExpectedConditions.urlToBe(url + "/page/" + currentPage +"/"));
+			}else if (startUrl == false) {
+				startPage ++;
+				String nextPage = String.format("//a[@href='%s/%s/']",url, startPage);
+				//System.out.println("Controllerò url con pagina iniziale: " + nextPage);
+				driver.findElement(By.xpath(nextPage)).click(); 
+				
+				//Aspetta che l'url sia caricato  (POSSIBILE PROBLEMA
+				WebDriverWait wait = new WebDriverWait(driver, 20); 
+				wait.until(ExpectedConditions.urlToBe(url +"/" + startPage +"/"));
+			}
 			
-			//Aspetta che l'url sia caricato
-			WebDriverWait wait = new WebDriverWait(driver, 20); 
-			wait.until(ExpectedConditions.urlToBe(url + "/page/" + currentPage +"/"));
+			
+			
 			
 	}while(currentPage < howManyPages);	
-		
 		driver.close();
 		scan.close();
 	}
