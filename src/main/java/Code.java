@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -12,10 +13,9 @@ import javax.swing.JOptionPane;
 
 public class Code {
 	public static void main(String[] args) {
-		String howManyPages;	//Acquisisce dall'utente in input quante pagine controllare
-		int pagesToCheck;		//Converte il valore in intero di howManyPages
-		String filePath;		//Path del file da salvare
-		int pathLength = 0;		//Contiene la lunghezza  della stringa che contiene il path
+		int pagesToCheck = 0;		//Converte il valore in intero di howManyPages
+		int howManyPages = 0;	//è una copia della variabile pagesToCheck
+		int filmFoundOut = 0;	//Contiene il numero dei film che soddisfano i requisiti
 		String filmName;		//Contiene il nome del film
 		String filmLink;		//Contiene l'url del film 
 		String filmData;		//Contiene il nome del film, pagina, punteggio e url da inserire nel file
@@ -26,7 +26,8 @@ public class Code {
 		
 	
 		System.setProperty("webdriver.chrome.driver", "C:\\Driver\\chromedriver\\chromedriver.exe");
-	
+		
+		try {
 		url = JOptionPane.showInputDialog("Inserisci il link di Cineblog:");
 		//System.out.print("Inserire il link del sito cineblog: ");
 		length = url.length();
@@ -53,23 +54,14 @@ public class Code {
 			completeUrl = url + "/page/" + startPage;
 		}
 		
-		
-		howManyPages = JOptionPane.showInputDialog("Quante pagine vuoi analizzare?:");
-		pagesToCheck = Integer.parseInt(howManyPages);
-		
-		filePath = JOptionPane.showInputDialog("Inserisci il percorso del file da salvare:");
-		pathLength = filePath.length();
-		
-		//Controllo del path
-		if(filePath.charAt(pathLength-1) != '\\') {	
-			filePath = filePath + "\\";
-		}
-		System.out.println(filePath);
-		
+	
+		pagesToCheck = Integer.parseInt(JOptionPane.showInputDialog("Quante pagine vuoi analizzare?"));
+		howManyPages = pagesToCheck; //Serve per il risultato finale
+			
 		WebDriver driver = new ChromeDriver();
 		System.out.println(completeUrl);
 		driver.get(completeUrl);
-	try {
+	
 		do {
 			double topLeft = 0;
 			double centerLeft = 0;
@@ -101,21 +93,25 @@ public class Code {
 				
 					//Se il film supera le 4,5 stelle stampa il nome, voto, pagina e link
 				if(totalRate >= 4.5) {	
+					filmFoundOut++;	//Aggiorna il contatore dei film trovati
 					filmName =	fiveStarElement.get(i).findElement(By.tagName("a")).getText();
+					filmLink = fiveStarElement.get(i).findElement(By.tagName("a")).getAttribute("href");
 					if (filmName.equals("")) {
 						filmName = "NON SONO RIUSCITO A LEGGERE IL TITOLO DI QUESTO FILM";
+						filmLink = url + "/page/" + startPage;
 					}
-					filmLink = fiveStarElement.get(i).findElement(By.tagName("a")).getAttribute("href");
 					filmData = filmName + "\tVoto: " + totalRate + " su 5" + "\tPagina " + startPage + " URL: " + filmLink;
 					System.out.println(filmData);
-					createFile (filePath, filmData);
+					createFile (filmData);
 				}
 				
 				topLeft = centerLeft = bottomLeft = 0; //reset
 				i++;
 			}
 				
+			pagesToCheck--;
 			startPage ++;
+			
 			//Clicca sulla pagina successiva 
 			String nextPage = String.format("//a[@href='%s/page/%s/']",url, startPage);
 			driver.findElement(By.xpath(nextPage)).click(); 
@@ -123,22 +119,40 @@ public class Code {
 			//Aspetta che l'url della pagina successiva sia caricato
 			WebDriverWait wait = new WebDriverWait(driver, 20); 
 			wait.until(ExpectedConditions.urlToBe(url + "/page/" + startPage +"/"));
-					
-		}while(startPage <= startPage + pagesToCheck);
+			
 		
-	}catch (Exception e) {
-		System.out.println("Errore, controllare dati immessi");
-		createFile ("", "ERRORE, CONTROLLARE SE I DATI IMMESSI SONO CORRETTI ALTRIMENTI CONTATTARE IL SUPPORTO TECNICO" );
+		}while(pagesToCheck != 0);
+		createFile ("\n\nHo analizzato " + howManyPages + " pagine, per un totale di " + (howManyPages * 12) + " film, di cui " + filmFoundOut + " corrispondono ai tuoi criteri di ricerca.");
 		driver.close();
 		System.exit(0);
-	}
-		driver.close();
+		
+		
+	}catch (NumberFormatException e) {
+		System.out.println("Errore, assicurati di aver inserito dei numeri validi: " + e.getMessage());
+		JOptionPane.showMessageDialog(null, "Assicurati di aver inserito dei numeri validi", "Errore", JOptionPane.ERROR_MESSAGE);
 		System.exit(0);
 	}
+	catch (java.lang.NullPointerException e) {
+		System.out.println(e.getMessage());
+		JOptionPane.showMessageDialog(null, "Grazie per aver utilizzato questo programma", "Arrivederci", JOptionPane.INFORMATION_MESSAGE);
+		System.exit(0);	
+	
+	}catch (WebDriverException e) {
+		System.out.println("Errore, controllare dati immessi" + e.getMessage());
+		JOptionPane.showMessageDialog(null, "Hai chiuso il Browser manualmente, questo può influire sui risultati della ricerca", "Errore", JOptionPane.ERROR_MESSAGE);
+		System.exit(0);	
+	}
+	catch (Exception e) {
+		System.out.println("Errore, controllare dati immessi" + e.getMessage());
+		JOptionPane.showMessageDialog(null, "Controllare che l'url sia corretto altrimenti contattare l'assistenza", "Errore", JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
+	}	
+}
 	
 	
-	public static void createFile (String filePath, String filmData) {
-		String fileName = filePath + "ListaFilm.txt";
+	public static void createFile (String text) {
+		String desktopPath = System.getProperty("user.home");
+		String fileName = desktopPath + "\\Desktop\\ListaFilm.txt";
 		PrintWriter outputStream = null;
 		
 		try {			
@@ -149,7 +163,7 @@ public class Code {
 			System.exit(0);    //Termina il programma
 		}
 		//Inserisce nel file i dati e lo chiude
-		outputStream.println(filmData);
+		outputStream.println(text);
 		outputStream.close();
 		System.out.println("File scritto correttamente");
 	}
