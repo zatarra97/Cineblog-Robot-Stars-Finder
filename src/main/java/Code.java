@@ -1,5 +1,9 @@
 import org.openqa.selenium.By;
 
+
+import java.lang.Object;  
+//import org.openqa.selenium.Point;
+import org.openqa.selenium.Dimension;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -16,13 +20,14 @@ import javax.swing.JTextField;
 
 public class Code {
 	public static void main(String[] args) {
-		int pagesToCheck = 0;		//Converte il valore in intero di howManyPages
-		int howManyPages = 0;		//è una copia della variabile pagesToCheck
+		int pagesToCheck = 0;		//Converte il valore in intero pageField
+		int pagesChecked = 1;		//Contiene il numero di pagine analizzate per l'esito finale
 		int filmFoundOut = 0;		//Contiene il numero dei film che soddisfano i requisiti
 		String filmName;			//Contiene il nome del film
 		String filmLink;			//Contiene l'url del film 
 		String filmData;			//Contiene il nome del film, pagina, punteggio e url da inserire nel file
-		double checkRate = 0;		//Contiene il punteggio che l'utente vorrebbe utilizzare come minimo
+		String rate = null;			//Contiene il punteggio che l'utente vorrebbe utilizzare come minimo
+		double checkRate = 0;		//Converte il valore della stringa checkRate
 		double totalRate;			//Contiene il punteggio di ogni film analizzato nel sito
 		String completeUrl = null;	//URL utilizzato per navigare nella prima pagina
 		String url = null;			//URL utilizzato per navigare dopo la la prima pagina
@@ -60,13 +65,12 @@ public class Code {
 	    	
 	    	  try {
 	    	  //CAMPO DELLO STAR RATING DEI FILM
-		 		String rate = rateField.getText();
+		 		rate = rateField.getText();
 		        //Sistema automaticamente la virgola con il punto
 		        if(rate.contains(",")){
 		 			rate = rate.replace(',','.');
 		 		}
 		 		checkRate = Double.parseDouble(rate);
-		 		System.out.println("Voto: " + rate);
 	    	  }catch(Exception ex) {
 	    		  if(checkRate != 0) {
 	    			  JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Il punteggio dei film non può superare le 5 stelle o essere inferiore a 1! <br>Riprova inserendo un numero corretto.<br>(Esempio: 3 oppure 4,5)", "Attenzione", JOptionPane.ERROR_MESSAGE);
@@ -91,7 +95,6 @@ public class Code {
 	    		  	allRight = true;
 	    		  	//CAMPO DELL'URL
 	    		  	url = urlField.getText();
-		    	  	System.out.println("URL: " + url);
 		    	  	length = url.length();
 		         
 		    	  	//Nel caso in cui l'url termini con il carattere '/' questo viene rimosso
@@ -102,7 +105,6 @@ public class Code {
 		    	  	//Trova in che pagina del sito si trova il link immesso e aggiorna l'url
 		    	  	startPage = CheckStartPage (url);
 		    	  	completeUrl = CheckUrl (url, startPage);
-		    	  	System.out.println("Start page : " + startPage);
 		    	  	
 		    	  	//Aggiornare l'url per cercare le pagine successive
 		    	  	if(url.contains("page")){
@@ -113,8 +115,12 @@ public class Code {
 	 			
 		 		//CAMPO DELLE PAGINE DA ANALIZZARE
 		 		pagesToCheck = Integer.parseInt(pageField.getText());
-		 		howManyPages = pagesToCheck; //Serve per il risultato finale
-		 		System.out.println("Pagine: " + pageField.getText());
+		 		
+		 		//Controllo campi
+		 		System.out.println("URL: " + url);
+		 		System.out.println("Pagina di partenza : " + startPage);
+		 		System.out.println("Voto: " + rate);
+		 		System.out.println("Pagine da controllare: " + pageField.getText());
 		         
 	    	  }
 	      }else {
@@ -123,15 +129,23 @@ public class Code {
 	      }
 		}while (allRight == false);
 		
-		//TODO Ridurre automaticamente la finestra di chrome a icona
+		
 		//Avviso per l'utente
 		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Appena questa finestra sarà chiusa partirà il robot che cercherà tutti i film che potrebbero interessarti.<br>"
-				+ "Si aprirà una finestra di Chrome che navigherà nelle pagine automaticamente, <br>"
-				+ "NON cliccare al suo interno, puoi anche ridurla a icona se ti da fastidio.<br>"
+				+ "Si aprirà una piccola finestra di Chrome che navigherà nelle pagine automaticamente, <br>"
+				+ "NON cliccare al suo interno, puoi anche spostarla o ridurla a icona se ti da fastidio.<br>"
 				+ "Se la chiudi il programma smette di funzionare. <br><br>Quando il programma avrà terminato il suo lavoro chiuderà da solo Google Chrome e ti avviserà.", "Cineblog Film Star Finder", JOptionPane.INFORMATION_MESSAGE);
+		
 		WebDriver driver = new ChromeDriver();
-		System.out.println("L'url che inserisco online è: " + completeUrl);
 		driver.get(completeUrl);
+		
+		//Sposta la finestra fuori dallo schermo (se si vuole aprire dalla barra chrome non si può) abilitare libreria.
+		//driver.manage().window().setPosition(new Point(0, -1000));
+		
+		//modifica le dimensioni della finestra:
+		Dimension d=new Dimension(200, 300);
+		driver.manage().window().setSize(d);
+		   
 	
 		do {
 			double topLeft = 0;
@@ -180,43 +194,62 @@ public class Code {
 			}
 				
 			pagesToCheck--;
-			startPage ++;
 			
-			//Clicca sulla pagina successiva 
-			String nextPage = String.format("//a[@href='%s/page/%s/']",url, startPage);
-			driver.findElement(By.xpath(nextPage)).click(); 
+			if (pagesToCheck!= 0) {
+				try {
+				//Clicca sulla pagina successiva 	
+					 
+				String nextPage = String.format("//a[@href='%s/page/%s/']",url, (startPage+1));
+				driver.findElement(By.xpath(nextPage)).click(); 
+				
+				//Aspetta che l'url della pagina successiva sia caricato
+				WebDriverWait wait = new WebDriverWait(driver, 20); 
+				wait.until(ExpectedConditions.urlToBe(url + "/page/" + (startPage+1) +"/"));
+				
+				pagesChecked++;
+				startPage ++;
+				System.out.println("adesso sono a pagina: " + startPage);
+				
+				//Se non ci sono più pagine da controllare nonostante il numero immesso dall'utente non sia ancora arrivato a zero o se ci sono problemi:
+				}catch(Exception ex) {
+					driver.close();
+					if (filmFoundOut > 0) {
+						CreateFile ("\n\nHo analizzato " + pagesChecked + " pagine al posto di " + (pagesChecked + pagesToCheck) + "per un totale di " + (pagesChecked * 12) + " film, di cui " + filmFoundOut + " corrispondono ai tuoi criteri di ricerca.\n\n\n");
+						JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Ricerca terminata!<br>Ho analizzato " + pagesChecked + " pagine al posto di " + (pagesChecked + pagesToCheck) + ". (Fino a pag. " + startPage + ")<br>Per un totale di " + (pagesChecked * 12) + " film esaminati. <br><br>Ho trovato " + filmFoundOut + " Film che potrebbero interessarti. <br> Ho salvato i tuoi film nel file \"Lista Film\" sul Desktop.", "Ricerca Terminata", JOptionPane.INFORMATION_MESSAGE);
+					}else {
+						JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Ricerca terminata!<br>Ho analizzato " + pagesChecked + " pagine al posto di " + (pagesChecked + pagesToCheck) + ". (Fino a pag. " + startPage + ")<br>Per un totale di " + (pagesChecked * 12) + " film esaminati. <br><br>Non ho trovato film per te con un punteggio di " + checkRate + " stelle o più.<br>Riprova con un punteggio minore.", "Ricerca Terminata", JOptionPane.INFORMATION_MESSAGE);
+					}
 					
-			//Aspetta che l'url della pagina successiva sia caricato
-			WebDriverWait wait = new WebDriverWait(driver, 20); 
-			wait.until(ExpectedConditions.urlToBe(url + "/page/" + startPage +"/"));
-			
-		
+					System.exit(0);
+				}
+			}
 		}while(pagesToCheck != 0);
-		CreateFile ("\n\nHo analizzato " + howManyPages + " pagine, per un totale di " + (howManyPages * 12) + " film, di cui " + filmFoundOut + " corrispondono ai tuoi criteri di ricerca.\n\n\n");
-		driver.close();
-		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Ricerca terminata correttamente! <br><br>Ho trovato " + filmFoundOut + " Film che potrebbero interessarti. <br> Ho salvato i tuoi film nel file \"Lista Film\" sul Desktop", "Ricerca Terminata", JOptionPane.INFORMATION_MESSAGE);
+			driver.close();
+			if (filmFoundOut > 0) {
+				CreateFile ("\n\nHo analizzato " + pagesChecked + " pagine, per un totale di " + (pagesChecked * 12) + " film, di cui " + filmFoundOut + " corrispondono ai tuoi criteri di ricerca.\n\n\n");
+				JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Ricerca terminata correttamente!<br>Ho analizzato " + pagesChecked + " pagine. (Fino a pag. " + startPage + ")<br>Per un totale di " + (pagesChecked * 12) + " film esaminati. <br><br>Ho trovato " + filmFoundOut + " Film che potrebbero interessarti. <br> Ho salvato i tuoi film nel file \"Lista Film\" sul Desktop.", "Ricerca Terminata", JOptionPane.INFORMATION_MESSAGE);
+			}else {
+				JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Ricerca terminata correttamente!<br>Ho analizzato " + pagesChecked + " pagine. (Fino a pag. " + startPage + ")<br>Per un totale di " + (pagesChecked * 12) + " film esaminati. <br><br>Non ho trovato film per te con un punteggio di "+ checkRate + " stelle o più.<br>Riprova con un punteggio minore.", "Ricerca Terminata", JOptionPane.INFORMATION_MESSAGE);
+			}
+		
 		System.exit(0);
 		
 	}catch (NumberFormatException e) {
-		System.out.println("Errore, assicurati di aver inserito dei numeri validi: ");
+		System.out.println("Errore, assicurati di aver inserito dei numeri validi\n");
 		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Input non valido, assicurarsi di inserire solo numeri validi", "Errore", JOptionPane.ERROR_MESSAGE);
 		System.exit(0);
-	}
-	catch (java.lang.NullPointerException e) {
-		System.out.println("Programma chiuso correttamente");
-		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Grazie per aver utilizzato questo programma", "Arrivederci", JOptionPane.INFORMATION_MESSAGE);
-		System.exit(0);	
-	
-	}catch (WebDriverException e) {
-		System.out.println("Errore, controllare dati immessi" + e.getMessage());
-		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Il Browser è stato chiuso forzatamente, in caso di problemi questo può influire sui risultati della ricerca", "Errore", JOptionPane.ERROR_MESSAGE);
-		System.exit(0);	
-	}
-	catch (Exception e) {
-		System.out.println("Errore, URL vuoto" + e.getMessage());
-		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Inserisci un URL prima", "Errore", JOptionPane.ERROR_MESSAGE);
+	}catch (NullPointerException e) {
+		//e.printStackTrace();
+		System.out.println("Browser chiuso manualmente.\n");
+		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Hai chiuso il Browser!", "Errore", JOptionPane.ERROR_MESSAGE);
 		System.exit(0);
-	}	
+	}catch (WebDriverException e) {
+		//e.printStackTrace();
+		System.out.println("Errore, controllare dati immessi\n");
+		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Il Browser è stato chiuso a causa di qualche problema.<br>controlla la connessione o l'url immesso.", "Errore", JOptionPane.ERROR_MESSAGE);
+		System.exit(0);		
+	}
+		
 }
 	
 	
