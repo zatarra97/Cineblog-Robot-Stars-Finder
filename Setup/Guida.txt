@@ -1,10 +1,10 @@
 1) Scaricare e installare Java dal link: https://www.java.com/it/download/
-2) Copiare la cartella "Driver" (senza alterare il nome della cartella o il contenuto) nella posizione "C:\" (Dove ci sono le cartelle UTENTI o PROGRAMMI)
-3) Avviare il programma "Cineblog01.jar"
+2) Copiare la cartella "Driver" (senza alterare il nome della cartella o il contenuto) nella posizione "C:\" (Dove ci sono le cartelle UTENTI o PROGRAMMI).
+3) Avviare il programma "Cineblog01.jar".
 
 
 Il programma è così strutturato:
-1) All'avvio verrà richiesto l'url del sito (Assicurarsi di inserire l'url di cineblog funzionante)
-2) Verrà chiesto il numero di pagine da controllare
+1) All'avvio verrà richiesto l'url del sito (Assicurarsi di inserire l'url di cineblog funzionante).
+2) Verrà chiesto il numero di pagine da controllare.
 3) Il voto, espresso in stelle (MAX 5), da utilizzare come criterio di ricerca nei film.
 
