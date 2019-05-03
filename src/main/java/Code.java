@@ -4,6 +4,8 @@ import org.openqa.selenium.By;
 import java.lang.Object;  
 //import org.openqa.selenium.Point;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.SessionNotCreatedException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -237,6 +239,18 @@ public class Code {
 	}catch (NumberFormatException e) {
 		System.out.println("Errore, assicurati di aver inserito dei numeri validi\n");
 		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>Input non valido, assicurarsi di inserire solo numeri validi", "Errore", JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
+	}catch(SessionNotCreatedException e) {
+		System.out.println("Chrome non trovato o da aggiornare\n");
+		JOptionPane.showMessageDialog(null, "<html><font face='Arial' size='5' color='black'>"
+				+ "Verifica di aver installato sul tuo pc Google Chrome.<br>"
+				+ "Se è già presente ciò significa che il tuo browser ha installato un nuovo aggiornamento!<br><br>"
+				+ "Verifica il numero di versione di Chrome inserendo nell'URL: \"chrome://settings/help\".<br>"
+				+ "Aggiorna il robot da \"http://chromedriver.chromium.org/downloads\"<br>"
+				+ "scaricando la versione corrispondente con lo stesso numero del tuo Browser<br>"
+				+ "E' necessario che combacino solo i primi due numeri <br>(es: Chrome vers. 74.0.3729.131 e Robot vers. 74.X.XXXX.X..)<br>"
+				+ "<br>Scaricato il robot bisognerà sostituirlo con il precedente <br>"
+				+ "che si trova nel percorso: C:\\Driver\\chromedriver\\<br><br>Dopodichè riavviare il programma.", "Attenzione", JOptionPane.ERROR_MESSAGE);
 		System.exit(0);
 	}catch (NullPointerException e) {
 		//e.printStackTrace();
