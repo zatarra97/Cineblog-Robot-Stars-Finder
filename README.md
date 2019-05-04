@@ -7,7 +7,7 @@
  ## GUIDA ALL'INSTALLAZIONE:
  1) Scaricare e installare Java dal link: https://www.java.com/it/download/
  2) Scaricare manualmente o con GIT il pacchetto, o da questo link: https://github.com/zatarra97/Cineblog-Robot-Stars-Finder/archive/master.zip
- 3) Estrarre ed entrare nella cartella "Cineblog stars finder", copiare la cartella "Driver" (senza alterare il nome della cartella o il contenuto) nell percorso "C:\" (Dove ci sono le cartelle "UTENTI" o "PROGRAMMI").
+ 3) Entrare nella cartella "Setup", copiare la cartella "Driver" (senza alterare il nome della cartella o il contenuto) nell percorso "C:\" (Dove ci sono le cartelle "UTENTI" o "PROGRAMMI").
  4) Avviare il programma "Cineblog01.jar".
 
 
